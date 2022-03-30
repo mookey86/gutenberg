@@ -190,6 +190,14 @@ export default function VisualEditor( { styles } ) {
 		return undefined;
 	}, [ isTemplateMode, themeSupportsLayout, defaultLayout ] );
 
+	const padding = useMemo( () => {
+		if ( isTemplateMode || ! themeSupportsLayout ) {
+			return undefined;
+		}
+
+		return defaultLayout?.padding;
+	} );
+
 	const titleRef = useRef();
 	useEffect( () => {
 		if ( isWelcomeGuideVisible || ! isCleanNewPost() ) {
@@ -245,6 +253,7 @@ export default function VisualEditor( { styles } ) {
 							<LayoutStyle
 								selector=".edit-post-visual-editor__post-title-wrapper, .block-editor-block-list__layout.is-root-container"
 								layout={ defaultLayout }
+								padding={ padding }
 							/>
 						) }
 						{ ! isTemplateMode && (

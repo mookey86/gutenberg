@@ -221,7 +221,7 @@ export const withLayoutStyles = createHigherOrderComponent(
 			: layout || defaultBlockLayout || {};
 		const padding = layout?.inherit
 			? usedLayout?.padding
-			: get( attributes, [ 'style', 'padding' ] );
+			: get( attributes, [ 'style', 'spacing', 'padding' ] );
 		const className = classnames( props?.className, {
 			[ `wp-container-${ id }` ]: shouldRenderLayoutStyles,
 		} );

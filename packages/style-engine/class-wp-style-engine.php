@@ -37,84 +37,177 @@ class WP_Style_Engine {
 	 *  - classnames   => an array of classnames to be returned for block styles. The key is a classname or pattern.
 	 *                    A value of `true` means the classname should be applied always. Otherwise a valid CSS property
 	 *                    to match the incoming value, e.g., "color" to match var:preset|color|somePresetName.
-	 *  - property_key => the key that represents a valid CSS property, e.g., "margin" or "border".
+	 *  - properties   => an array of `key => value` pairs that represents valid CSS properties for the style, e.g., "margin" or "border".
+	 *                    A 'default' property, corresponding to a single or shorthand value, is required.
 	 *  - path         => a path that accesses the corresponding style value in the block style object.
+	 *  - value_func   => a function to generate an array of valid CSS rules for a particular style object.
+	 *                    For example, `'padding' => 'array( 'top' => '1em' )` will return `array( 'padding-top' => '1em' )`
 	 */
 	const BLOCK_STYLE_DEFINITIONS_METADATA = array(
 		'color'      => array(
 			'text'       => array(
-				'property_key' => 'color',
-				'path'         => array( 'color', 'text' ),
-				'classnames'   => array(
-					'has-text-color' => true,
-					'has-%s-color'   => 'color',
+				'properties' => array(
+					'default' => 'color',
+				),
+				'path'       => array( 'color', 'text' ),
+				'classnames' => array(
+					'has-text-color'  => true,
+					'has-$slug-color' => 'color',
 				),
 			),
 			'background' => array(
-				'property_key' => 'background-color',
-				'path'         => array( 'color', 'background' ),
-				'classnames'   => array(
-					'has-background'          => true,
-					'has-%s-background-color' => 'color',
+				'properties' => array(
+					'default' => 'background-color',
+				),
+				'path'       => array( 'color', 'background' ),
+				'classnames' => array(
+					'has-background'             => true,
+					'has-$slug-background-color' => 'color',
 				),
 			),
 			'gradient'   => array(
-				'property_key' => 'background',
-				'path'         => array( 'color', 'gradient' ),
-				'classnames'   => array(
-					'has-background'             => true,
-					'has-%s-gradient-background' => 'gradient',
+				'properties' => array(
+					'default' => 'background',
+				),
+				'path'       => array( 'color', 'gradient' ),
+				'classnames' => array(
+					'has-background'                => true,
+					'has-$slug-gradient-background' => 'gradient',
+				),
+			),
+		),
+		'border'     => array(
+			'color'  => array(
+				'properties' => array(
+					'default' => 'border-color',
+					'sides'   => 'border-$side-color',
+				),
+				'path'       => array( 'border', 'color' ),
+				'classnames' => array(
+					'has-border-color'       => true,
+					'has-$slug-border-color' => 'color',
+				),
+			),
+			'radius' => array(
+				'properties' => array(
+					'default' => 'border-radius',
+					'sides'   => 'border-$side-radius',
+				),
+				'path'       => array( 'border', 'radius' ),
+			),
+			'style'  => array(
+				'properties' => array(
+					'default' => 'border-style',
+					'sides'   => 'border-$side-style',
+				),
+				'path'       => array( 'border', 'style' ),
+			),
+			'width'  => array(
+				'properties' => array(
+					'default' => 'border-width',
+					'sides'   => 'border-$side-width',
+				),
+				'path'       => array( 'border', 'width' ),
+			),
+			'top'    => array(
+				'value_func' => 'static::get_css_side_rules',
+				'path'       => array( 'border', 'top' ),
+				'css_vars'   => array(
+					'color' => '--wp--preset--color--$slug',
+				),
+			),
+			'right'  => array(
+				'value_func' => 'static::get_css_side_rules',
+				'path'       => array( 'border', 'right' ),
+				'css_vars'   => array(
+					'color' => '--wp--preset--color--$slug',
+				),
+			),
+			'bottom' => array(
+				'value_func' => 'static::get_css_side_rules',
+				'path'       => array( 'border', 'bottom' ),
+				'css_vars'   => array(
+					'color' => '--wp--preset--color--$slug',
+				),
+			),
+			'left'   => array(
+				'value_func' => 'static::get_css_side_rules',
+				'path'       => array( 'border', 'left' ),
+				'css_vars'   => array(
+					'color' => '--wp--preset--color--$slug',
 				),
 			),
 		),
 		'spacing'    => array(
 			'padding' => array(
-				'property_key' => 'padding',
-				'path'         => array( 'spacing', 'padding' ),
+				'properties' => array(
+					'default' => 'padding',
+					'sides'   => 'padding-$side',
+				),
+				'path'       => array( 'spacing', 'padding' ),
 			),
 			'margin'  => array(
-				'property_key' => 'margin',
-				'path'         => array( 'spacing', 'margin' ),
+				'properties' => array(
+					'default' => 'margin',
+					'sides'   => 'margin-$side',
+				),
+				'path'       => array( 'spacing', 'margin' ),
 			),
 		),
 		'typography' => array(
 			'fontSize'       => array(
-				'property_key' => 'font-size',
-				'path'         => array( 'typography', 'fontSize' ),
-				'classnames'   => array(
-					'has-%s-font-size' => 'font-size',
+				'properties' => array(
+					'default' => 'font-size',
+				),
+				'path'       => array( 'typography', 'fontSize' ),
+				'classnames' => array(
+					'has-$slug-font-size' => 'font-size',
 				),
 			),
 			'fontFamily'     => array(
-				'property_key' => 'font-family',
-				'path'         => array( 'typography', 'fontFamily' ),
-				'classnames'   => array(
-					'has-%s-font-family' => 'font-family',
+				'properties' => array(
+					'default' => 'font-family',
+				),
+				'path'       => array( 'typography', 'fontFamily' ),
+				'classnames' => array(
+					'has-$slug-font-family' => 'font-family',
 				),
 			),
 			'fontStyle'      => array(
-				'property_key' => 'font-style',
-				'path'         => array( 'typography', 'fontStyle' ),
+				'properties' => array(
+					'default' => 'font-style',
+				),
+				'path'       => array( 'typography', 'fontStyle' ),
 			),
 			'fontWeight'     => array(
-				'property_key' => 'font-weight',
-				'path'         => array( 'typography', 'fontWeight' ),
+				'properties' => array(
+					'default' => 'font-weight',
+				),
+				'path'       => array( 'typography', 'fontWeight' ),
 			),
 			'lineHeight'     => array(
-				'property_key' => 'line-height',
-				'path'         => array( 'typography', 'lineHeight' ),
+				'properties' => array(
+					'default' => 'line-height',
+				),
+				'path'       => array( 'typography', 'lineHeight' ),
 			),
 			'textDecoration' => array(
-				'property_key' => 'text-decoration',
-				'path'         => array( 'typography', 'textDecoration' ),
+				'properties' => array(
+					'default' => 'text-decoration',
+				),
+				'path'       => array( 'typography', 'textDecoration' ),
 			),
 			'textTransform'  => array(
-				'property_key' => 'text-transform',
-				'path'         => array( 'typography', 'textTransform' ),
+				'properties' => array(
+					'default' => 'text-transform',
+				),
+				'path'       => array( 'typography', 'textTransform' ),
 			),
 			'letterSpacing'  => array(
-				'property_key' => 'letter-spacing',
-				'path'         => array( 'typography', 'letterSpacing' ),
+				'properties' => array(
+					'default' => 'letter-spacing',
+				),
+				'path'       => array( 'typography', 'letterSpacing' ),
 			),
 		),
 	);
@@ -173,7 +266,7 @@ class WP_Style_Engine {
 					// One day, if there are no stored schemata, we could allow custom patterns or
 					// generate classnames based on other properties
 					// such as a path or a value or a prefix passed in options.
-					$classnames[] = sprintf( $classname, $slug );
+					$classnames[] = strtr( $classname, array( '$slug' => $slug ) );
 				}
 			}
 		}
@@ -190,13 +283,21 @@ class WP_Style_Engine {
 	 * @return array        An array of CSS rules.
 	 */
 	protected static function get_css( $style_value, $style_definition ) {
-		// Low-specificity check to see if the value is a CSS preset.
-		if ( is_string( $style_value ) && strpos( $style_value, 'var:' ) !== false ) {
-			return array();
+		$css = array();
+
+		if (
+			isset( $style_definition['value_func'] ) &&
+			is_callable( $style_definition['value_func'] )
+		) {
+			return call_user_func( $style_definition['value_func'], $style_value, $style_definition );
 		}
 
-		// If required in the future, style definitions could define a callable `value_func` to generate custom CSS rules.
-		return static::get_css_rules( $style_value, $style_definition['property_key'] );
+		// Low-specificity check to see if the value is a CSS preset.
+		if ( is_string( $style_value ) && strpos( $style_value, 'var:' ) !== false ) {
+			return $css;
+		}
+
+		return static::get_css_rules( $style_value, $style_definition );
 	}
 
 	/**
@@ -220,8 +321,11 @@ class WP_Style_Engine {
 		$styles_output = array();
 
 		// Collect CSS and classnames.
-		foreach ( self::BLOCK_STYLE_DEFINITIONS_METADATA as $definition_group ) {
-			foreach ( $definition_group as $style_definition ) {
+		foreach ( self::BLOCK_STYLE_DEFINITIONS_METADATA as $definition_group_key => $definition_group_style ) {
+			if ( empty( $block_styles[ $definition_group_key ] ) ) {
+				continue;
+			}
+			foreach ( $definition_group_style as $style_definition ) {
 				$style_value = _wp_array_get( $block_styles, $style_definition['path'], null );
 
 				if ( empty( $style_value ) ) {
@@ -261,29 +365,75 @@ class WP_Style_Engine {
 	/**
 	 * Default style value parser that returns a CSS ruleset.
 	 * If the input contains an array, it will be treated like a box model
-	 * for styles such as margins and padding
+	 * for styles such as margins and padding.
 	 *
-	 * @param string|array $style_value    A single raw Gutenberg style attributes value for a CSS property.
-	 * @param string       $style_property The CSS property for which we're creating a rule.
+	 * @param string|array $style_value      A single raw Gutenberg style attributes value for a CSS property.
+	 * @param array        $style_definition A single style definition from BLOCK_STYLE_DEFINITIONS_METADATA.
 	 *
 	 * @return array The class name for the added style.
 	 */
-	protected static function get_css_rules( $style_value, $style_property ) {
+	protected static function get_css_rules( $style_value, $style_definition ) {
 		$rules = array();
 
 		if ( ! $style_value ) {
 			return $rules;
 		}
 
+		$style_properties = $style_definition['properties'];
+
 		// We assume box model-like properties.
 		if ( is_array( $style_value ) ) {
 			foreach ( $style_value as $key => $value ) {
-				$rules[ "$style_property-$key" ] = $value;
+				$side_property           = strtr( $style_properties['sides'], array( '$side' => _wp_to_kebab_case( $key ) ) );
+				$rules[ $side_property ] = $value;
 			}
 		} else {
-			$rules[ $style_property ] = $style_value;
+			$rules[ $style_properties['default'] ] = $style_value;
 		}
 
+		return $rules;
+	}
+
+	/**
+	 * Style value parser that returns a CSS ruleset for style groups that have 'top', 'right', 'bottom', 'left' keys.
+	 * E.g., `border.top{color|width|style}.
+	 *
+	 * @param array $style_value      A single raw Gutenberg style attributes value for a CSS property.
+	 * @param array $style_definition A single style definition from BLOCK_STYLE_DEFINITIONS_METADATA.
+	 *
+	 * @return array The class name for the added style.
+	 */
+	protected static function get_css_side_rules( $style_value, $style_definition ) {
+		$rules = array();
+
+		if ( ! is_array( $style_value ) || empty( $style_value ) ) {
+			return $rules;
+		}
+
+		foreach ( $style_value as $css_property => $value ) {
+			if ( empty( $value ) ) {
+				continue;
+			}
+			// The first item in the style definition path array tells us the style property, e.g., "border".
+			// We use this to get a corresponding CSS style definition such as "color" or "width" from the same group.
+			$side_style_definition_path = array( $style_definition['path'][0], $css_property );
+			$side_style_definition      = _wp_array_get( self::BLOCK_STYLE_DEFINITIONS_METADATA, $side_style_definition_path, null );
+
+			if ( $side_style_definition && isset( $side_style_definition['properties']['sides'] ) ) {
+				// Set a CSS var if there is a valid preset value.
+				$slug = isset( $style_definition['css_vars'][ $css_property ] ) ? static::get_slug_from_preset_value( $value, $css_property ) : null;
+				if ( $slug ) {
+					$css_var = strtr(
+						$style_definition['css_vars'][ $css_property ],
+						array( '$slug' => $slug )
+					);
+					$value   = "var($css_var)";
+				}
+				// The second item in the style definition path array refers to the side property, e.g., "top".
+				$side_css_property           = strtr( $side_style_definition['properties']['sides'], array( '$side' => $style_definition['path'][1] ) );
+				$rules[ $side_css_property ] = $value;
+			}
+		}
 		return $rules;
 	}
 }

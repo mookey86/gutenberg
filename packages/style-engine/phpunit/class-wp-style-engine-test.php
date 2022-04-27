@@ -70,10 +70,15 @@ class WP_Style_Engine_Test extends WP_UnitTestCase {
 					'spacing' => array(
 						'margin' => '111px',
 					),
+					'border'  => array(
+						'color' => 'var:preset|color|cool-caramel',
+						'width' => '2rem',
+						'style' => 'dotted',
+					),
 				),
 				'expected_output' => array(
-					'css'        => 'margin: 111px;',
-					'classnames' => 'has-text-color has-texas-flood-color',
+					'css'        => 'border-style: dotted; border-width: 2rem; margin: 111px;',
+					'classnames' => 'has-text-color has-texas-flood-color has-border-color has-cool-caramel-border-color',
 				),
 			),
 
@@ -93,9 +98,17 @@ class WP_Style_Engine_Test extends WP_UnitTestCase {
 							'right'  => '10em',
 						),
 					),
+					'border'  => array(
+						'radius' => array(
+							'topLeft'     => '99px',
+							'topRight'    => '98px',
+							'bottomLeft'  => '97px',
+							'bottomRight' => '96px',
+						),
+					),
 				),
 				'expected_output' => array(
-					'css' => 'padding-top: 42px; padding-left: 2%; padding-bottom: 44px; padding-right: 5rem; margin-top: 12rem; margin-left: 2vh; margin-bottom: 2px; margin-right: 10em;',
+					'css' => 'border-top-left-radius: 99px; border-top-right-radius: 98px; border-bottom-left-radius: 97px; border-bottom-right-radius: 96px; padding-top: 42px; padding-left: 2%; padding-bottom: 44px; padding-right: 5rem; margin-top: 12rem; margin-left: 2vh; margin-bottom: 2px; margin-right: 10em;',
 				),
 			),
 
@@ -116,6 +129,7 @@ class WP_Style_Engine_Test extends WP_UnitTestCase {
 					'css' => 'font-family: Roboto,Oxygen-Sans,Ubuntu,sans-serif; font-style: italic; font-weight: 800; line-height: 1.3; text-decoration: underline; text-transform: uppercase; letter-spacing: 2;',
 				),
 			),
+
 			'valid_classnames_deduped'                     => array(
 				'block_styles'    => array(
 					'color'      => array(
@@ -132,6 +146,7 @@ class WP_Style_Engine_Test extends WP_UnitTestCase {
 					'classnames' => 'has-text-color has-copper-socks-color has-background has-splendid-carrot-background-color has-like-wow-dude-gradient-background has-fantastic-font-size has-totally-awesome-font-family',
 				),
 			),
+
 			'valid_classnames_with_null_style_values'      => array(
 				'block_styles'    => array(
 					'color' => array(
@@ -144,6 +159,7 @@ class WP_Style_Engine_Test extends WP_UnitTestCase {
 					'classnames' => 'has-text-color',
 				),
 			),
+
 			'invalid_classnames_preset_value'              => array(
 				'block_styles'    => array(
 					'color'   => array(
@@ -159,6 +175,7 @@ class WP_Style_Engine_Test extends WP_UnitTestCase {
 					'classnames' => 'has-text-color has-background',
 				),
 			),
+
 			'invalid_classnames_options'                   => array(
 				'block_styles'    => array(
 					'typography' => array(
@@ -171,6 +188,64 @@ class WP_Style_Engine_Test extends WP_UnitTestCase {
 					),
 				),
 				'expected_output' => array(),
+			),
+
+			'inline_valid_box_model_style_with_sides'      => array(
+				'block_styles'    => array(
+					'border' => array(
+						'top'    => array(
+							'color' => '#fe1',
+							'width' => '1.5rem',
+							'style' => 'dashed',
+						),
+						'right'  => array(
+							'color' => '#fe2',
+							'width' => '1.4rem',
+							'style' => 'solid',
+						),
+						'bottom' => array(
+							'color' => '#fe3',
+							'width' => '1.3rem',
+						),
+						'left'   => array(
+							'color' => 'var:preset|color|swampy-yellow',
+							'width' => '0.5rem',
+							'style' => 'dotted',
+						),
+					),
+				),
+				'expected_output' => array(
+					'css' => 'border-top-color: #fe1; border-top-width: 1.5rem; border-top-style: dashed; border-right-color: #fe2; border-right-width: 1.4rem; border-right-style: solid; border-bottom-color: #fe3; border-bottom-width: 1.3rem; border-left-color: var(--wp--preset--color--swampy-yellow); border-left-width: 0.5rem; border-left-style: dotted;',
+				),
+			),
+
+			'inline_invalid_box_model_style_with_sides'    => array(
+				'block_styles'    => array(
+					'border' => array(
+						'top'    => array(
+							'top'    => '#fe1',
+							'right'  => '1.5rem',
+							'cheese' => 'dashed',
+						),
+						'right'  => array(
+							'right' => '#fe2',
+							'top'   => '1.4rem',
+							'bacon' => 'solid',
+						),
+						'bottom' => array(
+							'color'  => 'var:preset|color|terrible-lizard',
+							'bottom' => '1.3rem',
+						),
+						'left'   => array(
+							'left'  => null,
+							'width' => null,
+							'top'   => 'dotted',
+						),
+					),
+				),
+				'expected_output' => array(
+					'css' => 'border-bottom-color: var(--wp--preset--color--terrible-lizard);',
+				),
 			),
 		);
 	}

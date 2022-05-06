@@ -275,7 +275,7 @@ class WP_Theme_JSON_6_0 extends WP_Theme_JSON_5_9 {
 		'spacing'    => array(
 			'margin'   => null,
 			'padding'  => null,
-			'blockGap' => 'top',
+			'blockGap' => null,
 		),
 		'typography' => array(
 			'fontFamily'     => null,

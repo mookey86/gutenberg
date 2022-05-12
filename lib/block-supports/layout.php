@@ -71,9 +71,11 @@ function gutenberg_get_layout_style( $selector, $layout, $has_block_gap_support 
 			if ( is_array( $gap_value ) ) {
 				$gap_value = isset( $gap_value['top'] ) ? $gap_value['top'] : null;
 			}
-			$gap_style = $gap_value && ! $should_skip_gap_serialization ? $gap_value : 'var( --wp--style--block-gap )';
-			$style    .= "$selector > * { margin-block-start: 0; margin-block-end: 0; }";
-			$style    .= "$selector > * + * { margin-block-start: $gap_style; margin-block-end: 0; }";
+			// TODO: Ensure that theme.json is outputting the default gap that used to be rendered via: var( --wp--style--block-gap, 0.5em )
+			if ( $gap_value && ! $should_skip_gap_serialization ) {
+				$style .= "$selector > * { margin-block-start: 0; margin-block-end: 0; }";
+				$style .= "$selector > * + * { margin-block-start: $gap_style; margin-block-end: 0; }";
+			}
 		}
 	} elseif ( 'flex' === $layout_type ) {
 		$layout_orientation = isset( $layout['orientation'] ) ? $layout['orientation'] : 'horizontal';
@@ -172,8 +174,10 @@ function gutenberg_render_layout_support_flag( $block_content, $block ) {
 		$used_layout = $default_layout;
 	}
 
+	// TODO: Should we handle the case where a block has opted out of using a classname? (e.g. how paragraph disables classnames)
+	$block_classname = wp_get_block_default_classname( $block['blockName'] );
 	$container_class = wp_unique_id( 'wp-container-' );
-	$class_names     = array( $container_class );
+	$class_names     = array( $block_classname, $container_class );
 
 	if ( isset( $used_layout['type'] ) ) {
 		$class_names[] = 'is-layout-' . sanitize_title( $used_layout['type'] );
@@ -198,7 +202,7 @@ function gutenberg_render_layout_support_flag( $block_content, $block ) {
 	// If a block's block.json skips serialization for spacing or spacing.blockGap,
 	// don't apply the user-defined value to the styles.
 	$should_skip_gap_serialization = gutenberg_should_skip_block_supports_serialization( $block_type, 'spacing', 'blockGap' );
-	$style                         = gutenberg_get_layout_style( ".$container_class", $used_layout, $has_block_gap_support, $gap_value, $should_skip_gap_serialization, $fallback_gap_value );
+	$style                         = gutenberg_get_layout_style( ".$block_classname.$container_class", $used_layout, $has_block_gap_support, $gap_value, $should_skip_gap_serialization, $fallback_gap_value );
 	// This assumes the hook only applies to blocks with a single wrapper.
 	// I think this is a reasonable limitation for that particular hook.
 	$content = preg_replace(

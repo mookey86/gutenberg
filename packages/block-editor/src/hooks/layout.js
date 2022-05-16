@@ -9,7 +9,11 @@ import { has } from 'lodash';
  */
 import { createHigherOrderComponent, useInstanceId } from '@wordpress/compose';
 import { addFilter } from '@wordpress/hooks';
-import { getBlockSupport, hasBlockSupport } from '@wordpress/blocks';
+import {
+	getBlockDefaultClassName,
+	getBlockSupport,
+	hasBlockSupport,
+} from '@wordpress/blocks';
 import { useSelect } from '@wordpress/data';
 import {
 	Button,
@@ -217,6 +221,9 @@ export const withLayoutStyles = createHigherOrderComponent(
 			[ `wp-container-${ id }` ]: shouldRenderLayoutStyles,
 			[ `is-layout-${ layoutType }` ]: true,
 		} );
+		const selector = `.${ getBlockDefaultClassName(
+			name
+		) }.wp-container-${ id }`;
 
 		return (
 			<>
@@ -225,9 +232,7 @@ export const withLayoutStyles = createHigherOrderComponent(
 					createPortal(
 						<LayoutStyle
 							blockName={ name }
-							selector={ `${
-								props?.className || '' // TODO: It seems the block className isn't really available here.
-							}.wp-container-${ id }` }
+							selector={ selector }
 							layout={ usedLayout }
 							style={ attributes?.style }
 						/>,

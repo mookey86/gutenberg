@@ -186,13 +186,6 @@ class WP_Theme_JSON_5_9 {
 		'filter'                     => array( 'filter', 'duotone' ),
 	);
 
-	const LAYOUT_STYLES = array(
-		'--wp--style--block-gap' => array (
-			'.is-layout-flex'         => 'gap',
-			'.is-layout-flow > * + *' => 'margin-top',
-		),
-	);
-
 	/**
 	 * Protected style properties.
 	 *
@@ -884,50 +877,25 @@ class WP_Theme_JSON_5_9 {
 		if ( empty( $declarations ) ) {
 			return '';
 		}
-		$ruleset          = '';
-		$additional_rules = '';
+		$ruleset = '';
 
 		if ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) {
 			$declaration_block = array_reduce(
 				$declarations,
-				function ( $carry, $element ) use( $selector, &$additional_rules ) {
-					if ( ! empty( $element['selectors'] ) && static::ROOT_BLOCK_SELECTOR !== $selector ) {
-						foreach( $element['selectors'] as $sub_selector => $property ) {
-							$additional_rules .= $selector . $sub_selector . " { \n";
-							$additional_rules .= "\t" . $property . ': ' . $element['value'] . ";\n";
-							$additional_rules .= "}\n";
-						}
-						return $carry;
-					}
+				function ( $carry, $element ) {
 					return $carry .= "\t" . $element['name'] . ': ' . $element['value'] . ";\n"; },
 				''
 			);
-
-			if ( $declaration_block ) {
-				$ruleset .= $selector . " {\n" . $declaration_block . "}\n";
-			}
+			$ruleset          .= $selector . " {\n" . $declaration_block . "}\n";
 		} else {
 			$declaration_block = array_reduce(
 				$declarations,
-				function ( $carry, $element ) use( $selector, &$additional_rules ) {
-					if ( ! empty( $element['selectors'] ) ) {
-						foreach( $element['selectors'] as $sub_selector => $property ) {
-							$additional_rules .= $selector . $sub_selector . " { ";
-							$additional_rules .= $property . ': ' . $element['value'] . ";";
-							$additional_rules .= " }";
-						}
-						return $carry;
-					}
+				function ( $carry, $element ) {
 					return $carry .= $element['name'] . ': ' . $element['value'] . ';'; },
 				''
 			);
-
-			if ( $declaration_block ) {
-				$ruleset .= $selector . '{' . $declaration_block . '}';
-			}
+			$ruleset          .= $selector . '{' . $declaration_block . '}';
 		}
-
-		$ruleset .= $additional_rules;
 
 		return $ruleset;
 	}
@@ -1293,15 +1261,10 @@ class WP_Theme_JSON_5_9 {
 				continue;
 			}
 
-			$declaration = array(
+			$declarations[] = array(
 				'name'  => $css_property,
 				'value' => $value,
 			);
-
-			if ( isset( static::LAYOUT_STYLES[ $css_property ] ) ) {
-				$declaration['selectors'] = static::LAYOUT_STYLES[ $css_property ];
-			}
-			$declarations[] = $declaration;
 		}
 
 		return $declarations;

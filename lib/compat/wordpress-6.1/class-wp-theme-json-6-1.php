@@ -28,6 +28,142 @@ class WP_Theme_JSON_6_1 extends WP_Theme_JSON_6_0 {
 		'button' => '.wp-element-button, .wp-block-button, button', // We have the .wp-block-button class so that this will target older buttons that have been serialized.
 	);
 	/**
+	 * The selectors and CSS properties for layout styles.
+	 *
+	 * @var array
+	 */
+	const LAYOUT_STYLES = array(
+		'--wp--style--block-gap' => array (
+			'.is-layout-flex'         => 'gap',
+			'.is-layout-flow > * + *' => 'margin-top',
+		),
+	);
+
+	/**
+	 * The valid properties under the styles key.
+	 *
+	 * @var array
+	 */
+	const VALID_STYLES = array(
+		'border'     => array(
+			'color'  => null,
+			'radius' => null,
+			'style'  => null,
+			'width'  => null,
+			'top'    => null,
+			'right'  => null,
+			'bottom' => null,
+			'left'   => null,
+		),
+		'color'      => array(
+			'background' => null,
+			'gradient'   => null,
+			'text'       => null,
+		),
+		'filter'     => array(
+			'duotone' => null,
+		),
+		'spacing'    => array(
+			'margin'   => null,
+			'padding'  => null,
+			'blockGap' => null,
+		),
+		'typography' => array(
+			'fontFamily'     => null,
+			'fontSize'       => null,
+			'fontStyle'      => null,
+			'fontWeight'     => null,
+			'letterSpacing'  => null,
+			'lineHeight'     => null,
+			'textDecoration' => null,
+			'textTransform'  => null,
+		),
+	);
+
+
+	/**
+	 * Converts each style section into a list of rulesets
+	 * containing the block styles to be appended to the stylesheet.
+	 *
+	 * See glossary at https://developer.mozilla.org/en-US/docs/Web/CSS/Syntax
+	 *
+	 * For each section this creates a new ruleset such as:
+	 *
+	 *   block-selector {
+	 *     style-property-one: value;
+	 *   }
+	 *
+	 * @param array $style_nodes Nodes with styles.
+	 * @return string The new stylesheet.
+	 */
+	protected function get_block_classes( $style_nodes ) {
+		$block_rules = '';
+
+		foreach ( $style_nodes as $metadata ) {
+			if ( null === $metadata['selector'] ) {
+				continue;
+			}
+
+			$node         = _wp_array_get( $this->theme_json, $metadata['path'], array() );
+			$selector     = $metadata['selector'];
+			$settings     = _wp_array_get( $this->theme_json, array( 'settings' ) );
+			$declarations = static::compute_style_properties( $node, $settings );
+
+			// 1. Separate the ones who use the general selector
+			// and the ones who use the duotone selector.
+			$declarations_duotone = array();
+			foreach ( $declarations as $index => $declaration ) {
+				if ( 'filter' === $declaration['name'] ) {
+					unset( $declarations[ $index ] );
+					$declarations_duotone[] = $declaration;
+				}
+			}
+
+			/*
+			 * Reset default browser margin on the root body element.
+			 * This is set on the root selector **before** generating the ruleset
+			 * from the `theme.json`. This is to ensure that if the `theme.json` declares
+			 * `margin` in its `spacing` declaration for the `body` element then these
+			 * user-generated values take precedence in the CSS cascade.
+			 * @link https://github.com/WordPress/gutenberg/issues/36147.
+			 */
+			if ( static::ROOT_BLOCK_SELECTOR === $selector ) {
+				$block_rules .= 'body { margin: 0; }';
+			}
+
+			// 2. Generate the rules that use the general selector.
+			$block_rules .= static::to_ruleset( $selector, $declarations );
+
+			// 3. Generate the rules that use the duotone selector.
+			if ( isset( $metadata['duotone'] ) && ! empty( $declarations_duotone ) ) {
+				$selector_duotone = static::scope_selector( $metadata['selector'], $metadata['duotone'] );
+				$block_rules     .= static::to_ruleset( $selector_duotone, $declarations_duotone );
+			}
+
+			if ( static::ROOT_BLOCK_SELECTOR === $selector ) {
+				$block_rules .= '.wp-site-blocks > .alignleft { float: left; margin-right: 2em; }';
+				$block_rules .= '.wp-site-blocks > .alignright { float: right; margin-left: 2em; }';
+				$block_rules .= '.wp-site-blocks > .aligncenter { justify-content: center; margin-left: auto; margin-right: auto; }';
+
+				$has_block_gap_support = _wp_array_get( $this->theme_json, array( 'settings', 'spacing', 'blockGap' ) ) !== null;
+				if ( $has_block_gap_support ) {
+					$block_rules .= '.wp-site-blocks > * { margin-block-start: 0; margin-block-end: 0; }';
+					$block_rules .= '.wp-site-blocks > * + * { margin-block-start: var( --wp--style--block-gap ); }';
+
+					$block_gap_value = _wp_array_get( $node, array( 'spacing', 'blockGap' ), '0.5em' );
+					foreach( static::LAYOUT_STYLES as $key => $layout_style_selectors ) {
+						foreach( $layout_style_selectors as $layout_selector => $css_property ) {
+							$block_rules .= "$selector $layout_selector { " . $css_property . ': ' . $block_gap_value . " }";
+						}
+					}
+				}
+			}
+		}
+
+		return $block_rules;
+	}
+
+	/**
 	 * Returns the metadata for each block.
 	 *
 	 * Example:
@@ -226,5 +362,127 @@ class WP_Theme_JSON_6_1 extends WP_Theme_JSON_6_0 {
 		$declarations = static::compute_style_properties( $node, $settings );
 		$block_rules  = static::to_ruleset( $selector, $declarations );
 		return $block_rules;
+	 * Given a selector and a declaration list,
+	 * creates the corresponding ruleset.
+	 *
+	 * To help debugging, will add some space
+	 * if SCRIPT_DEBUG is defined and true.
+	 *
+	 * @param string $selector CSS selector.
+	 * @param array  $declarations List of declarations.
+	 *
+	 * @return string CSS ruleset.
+	 */
+	protected static function to_ruleset( $selector, $declarations ) {
+		if ( empty( $declarations ) ) {
+			return '';
+		}
+		$ruleset          = '';
+		$additional_rules = '';
+
+		if ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) {
+			$declaration_block = array_reduce(
+				$declarations,
+				function ( $carry, $element ) use( $selector, &$additional_rules ) {
+					if ( ! empty( $element['selectors'] ) && static::ROOT_BLOCK_SELECTOR !== $selector ) {
+						foreach( $element['selectors'] as $sub_selector => $property ) {
+							$additional_rules .= $selector . $sub_selector . " { \n";
+							$additional_rules .= "\t" . $property . ': ' . $element['value'] . ";\n";
+							$additional_rules .= "}\n";
+						}
+						return $carry;
+					}
+					return $carry .= "\t" . $element['name'] . ': ' . $element['value'] . ";\n"; },
+				''
+			);
+
+			if ( $declaration_block ) {
+				$ruleset .= $selector . " {\n" . $declaration_block . "}\n";
+			}
+		} else {
+			$declaration_block = array_reduce(
+				$declarations,
+				function ( $carry, $element ) use( $selector, &$additional_rules ) {
+					if ( ! empty( $element['selectors'] ) ) {
+						foreach( $element['selectors'] as $sub_selector => $property ) {
+							$additional_rules .= $selector . $sub_selector . " { ";
+							$additional_rules .= $property . ': ' . $element['value'] . ";";
+							$additional_rules .= " }";
+						}
+						return $carry;
+					}
+					return $carry .= $element['name'] . ': ' . $element['value'] . ';'; },
+				''
+			);
+
+			if ( $declaration_block ) {
+				$ruleset .= $selector . '{' . $declaration_block . '}';
+			}
+		}
+
+		$ruleset .= $additional_rules;
+
+		return $ruleset;
+	}
+
+	/**
+	 * Given a styles array, it extracts the style properties
+	 * and adds them to the $declarations array following the format:
+	 *
+	 * ```php
+	 * array(
+	 *   'name'  => 'property_name',
+	 *   'value' => 'property_value,
+	 * )
+	 * ```
+	 *
+	 * @param array $styles Styles to process.
+	 * @param array $settings Theme settings.
+	 * @param array $properties Properties metadata.
+	 * @return array Returns the modified $declarations.
+	 */
+	protected static function compute_style_properties( $styles, $settings = array(), $properties = null ) {
+		if ( null === $properties ) {
+			$properties = static::PROPERTIES_METADATA;
+		}
+
+		$declarations = array();
+		if ( empty( $styles ) ) {
+			return $declarations;
+		}
+
+		foreach ( $properties as $css_property => $value_path ) {
+			$value = static::get_property_value( $styles, $value_path );
+
+			// Look up protected properties, keyed by value path.
+			// Skip protected properties that are explicitly set to `null`.
+			if ( is_array( $value_path ) ) {
+				$path_string = implode( '.', $value_path );
+				if (
+					array_key_exists( $path_string, static::PROTECTED_PROPERTIES ) &&
+					_wp_array_get( $settings, static::PROTECTED_PROPERTIES[ $path_string ], null ) === null
+				) {
+					continue;
+				}
+			}
+
+			// Skip if empty and not "0" or value represents array of longhand values.
+			$has_missing_value = empty( $value ) && ! is_numeric( $value );
+			if ( $has_missing_value || is_array( $value ) ) {
+				continue;
+			}
+
+			$declaration = array(
+				'name'  => $css_property,
+				'value' => $value,
+			);
+
+			if ( isset( static::LAYOUT_STYLES[ $css_property ] ) ) {
+				$declaration['selectors'] = static::LAYOUT_STYLES[ $css_property ];
+			}
+			$declarations[] = $declaration;
+		}
+
+		return $declarations;
 	}
 }

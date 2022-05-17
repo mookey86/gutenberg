@@ -21,6 +21,13 @@ export const ROOT_BLOCK_SUPPORTS = [
 	'padding',
 ];
 
+export const LAYOUT_STYLES = {
+	'--wp--style--block-gap': {
+		'.is-layout-flex': 'gap',
+		'.is-layout-flow > * + *': 'margin-top',
+	},
+};
+
 export const PRESET_METADATA = [
 	{
 		path: [ 'color', 'palette' ],

@@ -29,7 +29,7 @@ import { __unstablePresetDuotoneFilter as PresetDuotoneFilter } from '@wordpress
 /**
  * Internal dependencies
  */
-import { PRESET_METADATA, ROOT_BLOCK_SELECTOR } from './utils';
+import { LAYOUT_STYLES, PRESET_METADATA, ROOT_BLOCK_SELECTOR } from './utils';
 import { GlobalStylesContext } from './context';
 import { useSetting } from './hooks';
 
@@ -386,6 +386,21 @@ export const toStyles = ( tree, blockSelectors, hasBlockGapSupport ) => {
 			ruleset =
 				ruleset +
 				`${ duotoneSelector }{${ duotoneDeclarations.join( ';' ) };}`;
+		}
+
+		// Process blockGap styles.
+		if ( styles?.spacing?.blockGap ) {
+			const gapValue = styles.spacing.blockGap;
+			delete styles.spacing.blockGap;
+			Object.entries( LAYOUT_STYLES[ '--wp--style--block-gap' ] ).forEach(
+				( [ additionalSelector, cssProperty ] ) => {
+					const combinedSelector =
+						selector === ROOT_BLOCK_SELECTOR
+							? `${ selector } ${ additionalSelector }`
+							: `${ selector }${ additionalSelector }`;
+					ruleset += `${ combinedSelector } { ${ cssProperty }: ${ gapValue }; }`;
+				}
+			);
 		}
 
 		// Process the remaning block styles (they use either normal block class or __experimentalSelector).

@@ -125,7 +125,7 @@ export default {
 			blockGapStyleValue?.top &&
 			! shouldSkipSerialization( blockName, 'spacing', 'blockGap' )
 				? blockGapStyleValue?.top
-				: 'var( --wp--style--block-gap )';
+				: '';
 
 		let output =
 			!! contentSize || !! wideSize
@@ -165,12 +165,15 @@ export default {
 			}
 		`;
 
-		if ( hasBlockGapStylesSupport ) {
+		if ( hasBlockGapStylesSupport && blockGapValue ) {
 			output += `
 				${ appendSelectors( selector, '> *' ) } {
 					margin-block-start: 0;
 					margin-block-end: 0;
 				}
+			`;
+
+			output += `
 				${ appendSelectors( selector, '> * + *' ) } {
 					margin-block-start: ${ blockGapValue };
 				}

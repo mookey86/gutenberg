@@ -123,8 +123,11 @@ export default {
 		const blockGapValue =
 			style?.spacing?.blockGap &&
 			! shouldSkipSerialization( blockName, 'spacing', 'blockGap' )
-				? getGapCSSValue( style?.spacing?.blockGap, fallbackValue )
-				: `var( --wp--style--block-gap, ${ fallbackValue } )`;
+				? `gap: ${ getGapCSSValue(
+						style?.spacing?.blockGap,
+						fallbackValue
+				  ) };`
+				: '';
 		const justifyContent =
 			justifyContentMap[ layout.justifyContent ] ||
 			justifyContentMap.left;
@@ -151,7 +154,7 @@ export default {
 				${ appendSelectors( selector ) } {
 					display: flex;
 					flex-wrap: ${ flexWrap };
-					gap: ${ hasBlockGapStylesSupport ? blockGapValue : fallbackValue };
+					${ hasBlockGapStylesSupport ? blockGapValue : 'gap: ' + fallbackValue };
 					${ orientation === 'horizontal' ? rowOrientation : columnOrientation }
 				}
 

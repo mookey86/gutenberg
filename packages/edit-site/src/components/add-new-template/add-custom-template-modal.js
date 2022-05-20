@@ -17,8 +17,10 @@ import {
 	SearchControl,
 	TextHighlight,
 	__experimentalHStack as HStack,
+	__experimentalText as Text,
+	__experimentalHeading as Heading,
 } from '@wordpress/components';
-import { post, file } from '@wordpress/icons';
+import { pin, globe } from '@wordpress/icons';
 import { useSelect } from '@wordpress/data';
 import { useDebounce } from '@wordpress/compose';
 import { speak } from '@wordpress/a11y';
@@ -173,13 +175,17 @@ function AddCustomTemplateModal( {
 								} )
 							}
 						>
-							<Icon icon={ file } size={ 48 } />
-							<p className="template-type-label">
+							<Icon icon={ globe } />
+							<Heading
+								level={ 5 }
+							>
 								{ __( 'General' ) }
-							</p>
-							<p>
+							</Heading>
+							<Text
+								as="span"
+							>
 								{ `Design a template for all ${ entityForSuggestions.labels.plural }.` }
-							</p>
+							</Text>
 						</FlexItem>
 						<FlexItem
 							isBlock
@@ -190,11 +196,17 @@ function AddCustomTemplateModal( {
 								// show the available missing types...
 							}
 						>
-							<Icon icon={ post } size={ 48 } />
-							<h4>{ __( 'Specific' ) }</h4>
-							<p>
+							<Icon icon={ pin } />
+							<Heading
+								level={ 5 }
+							>
+								{ __( 'Specific' ) }
+							</Heading>
+							<Text
+								as="span"
+							>
 								{ `Design a template for a specific ${ entityForSuggestions.labels.singular }.` }
-							</p>
+							</Text>
 						</FlexItem>
 					</Flex>{ ' ' }
 				</>

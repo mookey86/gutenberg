@@ -14,11 +14,30 @@
 	> div {
 		text-align: center;
 		cursor: pointer;
-		padding: 15px 20px;
+		padding: $grid-unit-30;
 		border: 1px solid $gray-300;
+		border-radius: $radius-block-ui;
+		width: 256px;
+		display: flex;
+		flex-direction: column;
+		gap: $grid-unit;
+		align-items: center;
+		justify-content: center;
 
-		.template-type-label {
-			font-weight: 600;
+		span {
+			color: $gray-700;
+		}
+
+		&:hover {
+			border-color: var(--wp-admin-theme-color);
+
+			h5 {
+				color: var(--wp-admin-theme-color);
+			}
+		}
+
+		&:focus {
+			box-shadow: 0 0 0 var(--wp-admin-border-width-focus) var(--wp-admin-theme-color);
 		}
 	}
 }

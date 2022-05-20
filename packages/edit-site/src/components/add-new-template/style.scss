@@ -9,3 +9,24 @@
 		}
 	}
 }
+
+.edit-site-components-add-custom-template{
+	> div {
+		text-align: center;
+		cursor: pointer;
+		padding: 15px 20px;
+		border: 1px solid $gray-300;
+
+		.template-type-label {
+			font-weight: 600;
+		}
+	}
+}
+
+.edit-site-block-types-item-list {
+	.template-suggestion-item{
+		display: block;
+		width: 100%;
+		text-align: left;
+	}
+}

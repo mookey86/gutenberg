@@ -16,14 +16,14 @@ import {
 	Modal,
 	SearchControl,
 	TextHighlight,
-	__experimentalHStack as HStack,
+	// __experimentalHStack as HStack,
 	__experimentalText as Text,
 	__experimentalHeading as Heading,
 } from '@wordpress/components';
 import { pin, globe } from '@wordpress/icons';
 import { useSelect } from '@wordpress/data';
-import { useDebounce } from '@wordpress/compose';
-import { speak } from '@wordpress/a11y';
+// import { useDebounce } from '@wordpress/compose';
+// import { speak } from '@wordpress/a11y';
 
 import { store as coreStore } from '@wordpress/core-data';
 
@@ -61,7 +61,7 @@ function SuggestionListItem( {
 function SuggestionList( {
 	entityForSuggestions,
 	onSelect,
-	existingTemplateSlugs,
+	// existingTemplateSlugs,
 } ) {
 	// TODO: `entityForSuggestions` will be used and is an attempt to
 	// reuse things for other queries like taxonomies.
@@ -141,17 +141,18 @@ function AddCustomTemplateModal( {
 	onClose,
 	onSelect,
 	existingTemplateSlugs,
-	missingPostTypeTemplates,
 	entityForSuggestions,
 } ) {
-	const [ showCustomTypes, setShowCustomTypes ] = useState( false );
+	const [ showSearchEntities, setShowSearchEntities ] = useState(
+		entityForSuggestions.hasGeneralTemplate
+	);
 	return (
 		<Modal
 			title={ `Add a template for post type: ${ entityForSuggestions.labels.singular }` }
 			closeLabel={ __( 'Close' ) }
 			onRequestClose={ onClose }
 		>
-			{ ! showCustomTypes && (
+			{ ! showSearchEntities && (
 				<>
 					<p>
 						{ __(
@@ -176,14 +177,8 @@ function AddCustomTemplateModal( {
 							}
 						>
 							<Icon icon={ globe } />
-							<Heading
-								level={ 5 }
-							>
-								{ __( 'General' ) }
-							</Heading>
-							<Text
-								as="span"
-							>
+							<Heading level={ 5 }>{ __( 'General' ) }</Heading>
+							<Text as="span">
 								{ `Design a template for all ${ entityForSuggestions.labels.plural }.` }
 							</Text>
 						</FlexItem>
@@ -191,27 +186,21 @@ function AddCustomTemplateModal( {
 							isBlock
 							onClick={
 								() => {
-									setShowCustomTypes( true );
+									setShowSearchEntities( true );
 								}
 								// show the available missing types...
 							}
 						>
 							<Icon icon={ pin } />
-							<Heading
-								level={ 5 }
-							>
-								{ __( 'Specific' ) }
-							</Heading>
-							<Text
-								as="span"
-							>
+							<Heading level={ 5 }>{ __( 'Specific' ) }</Heading>
+							<Text as="span">
 								{ `Design a template for a specific ${ entityForSuggestions.labels.singular }.` }
 							</Text>
 						</FlexItem>
 					</Flex>{ ' ' }
 				</>
 			) }
-			{ showCustomTypes && (
+			{ showSearchEntities && (
 				<>
 					<p>{ `Use the search form below to find or create a template for a certain ${ entityForSuggestions.labels.singular }.` }</p>
 					<SuggestionList

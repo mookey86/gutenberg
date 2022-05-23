@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { filter, find, includes, map } from 'lodash';
+import { filter, includes } from 'lodash';
 
 /**
  * WordPress dependencies
@@ -42,6 +42,7 @@ import { usePostTypes } from './utils';
 import { useHistory } from '../routes';
 import { store as editSiteStore } from '../../store';
 
+// TODO: check why we need info from `__experimentalGetDefaultTemplateTypes` and here in js..
 const DEFAULT_TEMPLATE_SLUGS = [
 	'front-page',
 	// TODO: Info about this need to be change from `post` to make it clear we are creating `single` template.
@@ -136,8 +137,12 @@ export default function NewTemplate( { postType } ) {
 		}
 	}
 
-	const existingTemplateSlugs = map( templates, 'slug' );
+	const existingTemplateSlugs = ( templates || [] ).map(
+		( { slug } ) => slug
+	);
 
+	// TODO: rename to missingDefaultTemplates(or combine these arrays like`missingPostTypeTemplates`).
+	// Also it's weird that we don't have a single source of truth for the default templates. Needs looking..
 	const missingTemplates = filter(
 		defaultTemplateTypes,
 		( template ) =>
@@ -146,30 +151,25 @@ export default function NewTemplate( { postType } ) {
 	);
 
 	// TODO: we will need to update the check as the menu item should always
-	// be there to create a specicif 'post' template(ex post-$posttype-$slug)
-	const missingPostTypeTemplates = postTypes?.filter( ( _postType ) => {
-		const { slug } = _postType;
-		return ! existingTemplateSlugs?.includes( `single-${ slug }` );
-	} );
-
-	const hasMissingPostTypeTemplates = !! missingPostTypeTemplates?.length;
-	let extraTemplates = [];
-	if ( hasMissingPostTypeTemplates ) {
-		//TODO: if the only available post types is `post`, should we just
-		// fallback to what we have now to create `single` and not `single-post`?
-
-		// map to `single` default template
-		extraTemplates = missingPostTypeTemplates.map( ( _postType ) => {
+	// be there to create a specific 'post' template(ex post-$posttype-$slug)
+	// Also we might need to check if there are `posts` from the $postType as,
+	// it would show a search with no posts available..
+	// TODO: make all strings translatable.
+	const extraTemplates = ( postTypes || [] ).reduce(
+		( accumulator, _postType ) => {
 			const {
 				slug,
 				labels: { singular_name: singularName },
 				menu_icon: icon,
 				name,
 			} = _postType;
-			return {
+			const hasGeneralTemplate = existingTemplateSlugs?.includes(
+				`single-${ slug }`
+			);
+			accumulator.push( {
 				slug: `single-${ slug }`,
-				title: `Single ${ name }`,
-				description: `Displays a single ${ name }.`,
+				title: `Single ${ singularName }`,
+				description: `Displays a single ${ singularName }.`,
 				icon,
 				onClick: ( template ) => {
 					setShowCustomTemplateModal( true );
@@ -177,61 +177,41 @@ export default function NewTemplate( { postType } ) {
 						type: 'postType',
 						slug,
 						labels: { singular: singularName, plural: name },
+						hasGeneralTemplate,
 						template,
 					} );
 				},
-			};
-		} );
-		// missingTemplates.push( ...extraTemplates );
-	}
-	// TODO: create `archive-$postType in a better way of course
-	const missingPostTypeArchiveTemplates = postTypes?.filter(
-		( _postType ) => {
-			const { slug } = _postType;
-			return ! existingTemplateSlugs?.includes( `archive-${ slug }` );
-		}
-	);
-	if ( !! missingPostTypeArchiveTemplates?.length ) {
-		extraTemplates.push(
-			...missingPostTypeArchiveTemplates.map( ( _postType ) => {
-				const {
-					slug,
-					// labels: { singular_name: singularName },
-					menu_icon: icon,
-					name,
-				} = _postType;
-				return {
+			} );
+			// Add conditionally the `archive-$post_type` item.
+			if ( ! existingTemplateSlugs?.includes( `archive-${ slug }` ) ) {
+				accumulator.push( {
 					slug: `archive-${ slug }`,
 					title: `Archive ${ name }`,
 					description: `Displays archive of ${ name }.`,
 					icon,
-					// onClick: ( template ) => {
-					// 	setShowCustomTemplateModal( true );
-					// 	setEntityForSuggestions( {
-					// 		type: 'postType',
-					// 		slug,
-					// 		labels: { singular: singularName, plural: name },
-					// 		template,
-					// 	} );
-					// },
-				};
-			} )
-		);
-		// missingTemplates.push( ...extraTemplates );
-	}
+				} );
+			}
+			return accumulator;
+		},
+		[]
+	);
 
+	// TODO: better handling here.
 	if ( ! missingTemplates.length && ! extraTemplates.length ) {
 		return null;
 	}
 
 	// Update the sort order to match the DEFAULT_TEMPLATE_SLUGS order.
 	// TODO: check sorting with new items.
-	missingTemplates.sort( ( template1, template2 ) => {
+	missingTemplates?.sort( ( template1, template2 ) => {
 		return (
 			DEFAULT_TEMPLATE_SLUGS.indexOf( template1.slug ) -
 			DEFAULT_TEMPLATE_SLUGS.indexOf( template2.slug )
 		);
 	} );
+
+	// Append all extra templates at the end of the list for now.
+	missingTemplates.push( ...extraTemplates );
 
 	return (
 		<>
@@ -249,42 +229,6 @@ export default function NewTemplate( { postType } ) {
 			>
 				{ () => (
 					<NavigableMenu className="edit-site-new-template-dropdown__popover">
-						{ hasMissingPostTypeTemplates && (
-							<MenuGroup label="Extra templates - change me">
-								{ extraTemplates.map( ( template ) => {
-									const {
-										title,
-										description,
-										slug,
-										onClick,
-										icon,
-									} = template;
-									return (
-										<MenuItem
-											icon={
-												icon ||
-												TEMPLATE_ICONS[ slug ] ||
-												post
-											}
-											iconPosition="left"
-											info={ description }
-											key={ slug }
-											onClick={
-												() =>
-													!! onClick
-														? onClick( template )
-														: createTemplate(
-																template
-														  )
-												// We will be navigated way so no need to close the dropdown.
-											}
-										>
-											{ title }
-										</MenuItem>
-									);
-								} ) }
-							</MenuGroup>
-						) }
 						<MenuGroup label={ postType.labels.add_new_item }>
 							{ missingTemplates.map( ( template ) => {
 								const {
@@ -304,14 +248,10 @@ export default function NewTemplate( { postType } ) {
 										iconPosition="left"
 										info={ description }
 										key={ slug }
-										onClick={
-											() =>
-												!! onClick
-													? onClick(
-															template.entityForSuggestions
-													  )
-													: createTemplate( template )
-											// We will be navigated way so no need to close the dropdown.
+										onClick={ () =>
+											!! onClick
+												? onClick( template )
+												: createTemplate( template )
 										}
 									>
 										{ title }
@@ -328,7 +268,6 @@ export default function NewTemplate( { postType } ) {
 					existingTemplateSlugs={ existingTemplateSlugs }
 					onSelect={ createTemplate }
 					entityForSuggestions={ entityForSuggestions }
-					missingPostTypeTemplates={ missingPostTypeTemplates }
 				/>
 			) }
 		</>

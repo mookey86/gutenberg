@@ -67,6 +67,7 @@ function gutenberg_get_layout_style( $selector, $layout, $has_block_gap_support 
 		$style .= "$selector > .alignleft { float: left; margin-inline-start: 0; margin-inline-end: 2em; }";
 		$style .= "$selector > .alignright { float: right; margin-inline-start: 2em; margin-inline-end: 0; }";
 		$style .= "$selector > .aligncenter { margin-left: auto !important; margin-right: auto !important; }";
+
 		if ( $has_block_gap_support ) {
 			if ( is_array( $gap_value ) ) {
 				$gap_value = isset( $gap_value['top'] ) ? $gap_value['top'] : null;
@@ -175,14 +176,19 @@ function gutenberg_render_layout_support_flag( $block_content, $block ) {
 	}
 
 	// TODO: Should we handle the case where a block has opted out of using a classname? (e.g. how paragraph disables classnames)
-	$block_classname = wp_get_block_default_classname( $block['blockName'] );
-	$container_class = wp_unique_id( 'wp-container-' );
-	$class_names     = array( $block_classname, $container_class );
+	$block_classname  = wp_get_block_default_classname( $block['blockName'] );
+	$container_class  = wp_unique_id( 'wp-container-' );
+	$layout_classname = '';
+	$class_names      = array( $block_classname, $container_class );
 
 	if ( isset( $used_layout['type'] ) ) {
-		$class_names[] = 'is-layout-' . sanitize_title( $used_layout['type'] );
+		$layout_classname = _wp_array_get( $default_layout, array( 'definitions', $used_layout['type'], 'className' ), '' );
 	} else {
-		$class_names[] = 'is-layout-flow';
+		$layout_classname = _wp_array_get( $default_layout, array( 'definitions', 'default', 'className' ), '' );
+	}
+
+	if ( $layout_classname && is_string( $layout_classname ) ) {
+		$class_names[] = sanitize_title( $layout_classname );
 	}
 
 	$gap_value  = _wp_array_get( $block, array( 'attrs', 'style', 'spacing', 'blockGap' ) );

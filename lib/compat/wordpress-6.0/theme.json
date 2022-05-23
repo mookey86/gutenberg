@@ -185,6 +185,24 @@
 			],
 			"text": true
 		},
+		"layout": {
+			"definitions": {
+				"default": {
+					"name": "flow",
+					"slug": "flow",
+					"className": "is-layout-flow",
+					"blockGapSelector": ".is-layout-flow > * + *",
+					"blockGapProp": "margin-top"
+				},
+				"flex": {
+					"name": "flex",
+					"slug": "flex",
+					"className": "is-layout-flex",
+					"blockGapSelector": ".is-layout-flex",
+					"blockGapProp": "gap"
+				}
+			}
+		},
 		"spacing": {
 			"blockGap": null,
 			"margin": false,

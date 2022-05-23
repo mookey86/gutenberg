@@ -8,7 +8,6 @@
 -   `CheckboxControl`: Add unit tests ([#41165](https://github.com/WordPress/gutenberg/pull/41165)).
 -   `ColorPalette` updated to satisfy `react/exhuastive-deps` eslint rule ([#41253](https://github.com/WordPress/gutenberg/pull/41253))
 
-
 ## 19.11.0 (2022-05-18)
 
 ### Enhancements

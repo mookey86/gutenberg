@@ -47,7 +47,8 @@ const DEFAULT_TEMPLATE_SLUGS = [
 	'front-page',
 	// TODO: Info about this need to be change from `post` to make it clear we are creating `single` template.
 	'single',
-	'page',
+	// TODO: need to update `get_default_block_template_types` for 6.1 and where this change cascades.
+	// 'page',
 	'index',
 	'archive',
 	'author',
@@ -163,11 +164,13 @@ export default function NewTemplate( { postType } ) {
 				menu_icon: icon,
 				name,
 			} = _postType;
+			// `page` post type is the single exception for `single-$post_type` and archive rule.
+			const isPage = slug === 'page';
 			const hasGeneralTemplate = existingTemplateSlugs?.includes(
-				`single-${ slug }`
+				isPage ? slug : `single-${ slug }`
 			);
 			accumulator.push( {
-				slug: `single-${ slug }`,
+				slug: isPage ? slug : `single-${ slug }`,
 				title: `Single ${ singularName }`,
 				description: `Displays a single ${ singularName }.`,
 				icon,
@@ -186,7 +189,7 @@ export default function NewTemplate( { postType } ) {
 			if ( ! existingTemplateSlugs?.includes( `archive-${ slug }` ) ) {
 				accumulator.push( {
 					slug: `archive-${ slug }`,
-					title: `Archive ${ name }`,
+					title: `${ singularName } archive`,
 					description: `Displays archive of ${ name }.`,
 					icon,
 				} );

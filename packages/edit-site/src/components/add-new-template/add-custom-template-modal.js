@@ -40,6 +40,8 @@ function SuggestionListItem( {
 	onSelect,
 	entityForSuggestions,
 } ) {
+	// TODO: handle this better.
+	const isPage = entityForSuggestions.slug === 'page';
 	return (
 		<Button
 			className="template-suggestion-item"
@@ -49,7 +51,9 @@ function SuggestionListItem( {
 				onSelect( {
 					title,
 					description: title,
-					slug: `single-${ entityForSuggestions.slug }-${ suggestion.slug }`,
+					slug: isPage
+						? `${ entityForSuggestions.slug }-${ suggestion.slug }`
+						: `single-${ entityForSuggestions.slug }-${ suggestion.slug }`,
 				} );
 			} }
 		>
@@ -78,7 +82,7 @@ function SuggestionList( {
 				coreStore
 			);
 			const selectorArgs = [
-				'postType',
+				entityForSuggestions.type,
 				entityForSuggestions.slug,
 				{
 					...BASE_QUERY,

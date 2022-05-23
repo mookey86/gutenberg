@@ -17,7 +17,7 @@ import { map, uniq } from 'lodash';
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { useRef, useEffect } from '@wordpress/element';
+import { useRef, useEffect, useCallback } from '@wordpress/element';
 import { usePreferredColorSchemeStyle } from '@wordpress/compose';
 
 /**
@@ -92,9 +92,9 @@ function ColorPalette( {
 				scrollViewRef.current.scrollTo( { x: 0, y: 0 } );
 			}
 		}
-	}, [ currentSegment ] );
+	}, [ currentSegment, isSelectedCustom ] );
 
-	function isSelectedCustom() {
+	const isSelectedCustom = useCallback( () => {
 		const isWithinColors =
 			activeColor && mergedColors && mergedColors.includes( activeColor );
 		if ( enableCustomColor && activeColor ) {
@@ -104,7 +104,13 @@ function ColorPalette( {
 			return ! isGradientColor && ! isWithinColors;
 		}
 		return false;
-	}
+	}, [
+		activeColor,
+		mergedColors,
+		enableCustomColor,
+		isGradientColor,
+		isGradientSegment,
+	] );
 
 	function isSelected( color ) {
 		return ! isSelectedCustom() && activeColor === color;

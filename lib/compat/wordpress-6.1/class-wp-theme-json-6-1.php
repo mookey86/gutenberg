@@ -362,6 +362,9 @@ class WP_Theme_JSON_6_1 extends WP_Theme_JSON_6_0 {
 		$declarations = static::compute_style_properties( $node, $settings );
 		$block_rules  = static::to_ruleset( $selector, $declarations );
 		return $block_rules;
+	}
+
+	/**
 	 * Given a selector and a declaration list,
 	 * creates the corresponding ruleset.
 	 *

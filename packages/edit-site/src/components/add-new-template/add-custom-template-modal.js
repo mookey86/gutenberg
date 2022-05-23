@@ -75,9 +75,6 @@ function SuggestionList( {
 	// const debouncedSearch = useDebounce( setSearch, 250 );
 	const { searchResults, searchHasResolved } = useSelect(
 		( select ) => {
-			if ( ! search ) {
-				return { searchResults: EMPTY_ARRAY, searchHasResolved: true };
-			}
 			const { getEntityRecords, hasFinishedResolution } = select(
 				coreStore
 			);
@@ -87,10 +84,10 @@ function SuggestionList( {
 				{
 					...BASE_QUERY,
 					search,
-					orderby: 'relevance',
+					orderby: !! search ? 'relevance' : 'modified',
 					// TODO: exclude existing slugs(templates for specific entities)...
 					//  exclude: existingTemplateSlugs,
-					per_page: 20,
+					per_page: !! search ? 20 : 10,
 				},
 			];
 			return {
@@ -124,6 +121,7 @@ function SuggestionList( {
 			/>
 			{ !! suggestions?.length && (
 				// TODO: we should add a max-height with overflow here..
+				// also check about a min-height as results might cause layout shift.
 				<div className="edit-site-block-types-item-list">
 					{ suggestions.map( ( suggestion ) => (
 						<SuggestionListItem

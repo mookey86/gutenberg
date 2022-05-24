@@ -3,7 +3,6 @@
  */
 import { useState, useMemo, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-
 import {
 	Button,
 	Flex,
@@ -14,11 +13,13 @@ import {
 	TextHighlight,
 	__experimentalText as Text,
 	__experimentalHeading as Heading,
+	__unstableComposite as Composite,
+	__unstableUseCompositeState as useCompositeState,
+	__unstableCompositeItem as CompositeItem,
 } from '@wordpress/components';
 import { pin, globe } from '@wordpress/icons';
 import { useSelect } from '@wordpress/data';
 import { useDebounce } from '@wordpress/compose';
-// import { speak } from '@wordpress/a11y';
 import { store as coreStore } from '@wordpress/core-data';
 
 /**
@@ -38,13 +39,16 @@ function SuggestionListItem( {
 	search,
 	onSelect,
 	entityForSuggestions,
+	composite,
 } ) {
 	return (
-		<Button
-			className="template-suggestion-item"
+		<CompositeItem
+			role="option"
+			as={ Button }
+			{ ...composite }
+			className="edit-site-custom-template-modal__suggestions_list__list-item"
 			onClick={ () => {
 				const title = `Template for: ${ suggestion.name } - ${ entityForSuggestions.labels.singular }`;
-				// TODO: check how it can be reused for taxomies, etc..
 				onSelect( {
 					title,
 					description: title,
@@ -53,13 +57,12 @@ function SuggestionListItem( {
 			} }
 		>
 			<TextHighlight text={ suggestion.name } highlight={ search } />
-		</Button>
+		</CompositeItem>
 	);
 }
 
 function SuggestionList( { entityForSuggestions, onSelect } ) {
-	// TODO: `entityForSuggestions` is an attempt to be
-	// reuses for other queries like taxonomies in follow ups.
+	const composite = useCompositeState( { orientation: 'vertical' } );
 	const [ suggestions, setSuggestions ] = useState( EMPTY_ARRAY );
 	// We need to track two values, the search input's value(searchInputValue)
 	// and the one we want to debounce(search) and make REST API requests.
@@ -130,7 +133,11 @@ function SuggestionList( { entityForSuggestions, onSelect } ) {
 			{ !! suggestions?.length && (
 				// TODO: we should add a max-height with overflow here..
 				// also check about a min-height as results might cause layout shift.
-				<div className="edit-site-block-types-item-list">
+				<Composite
+					{ ...composite }
+					role="listbox"
+					className="edit-site-custom-template-modal__suggestions_list"
+				>
 					{ suggestions.map( ( suggestion ) => (
 						<SuggestionListItem
 							key={ suggestion.slug }
@@ -138,9 +145,10 @@ function SuggestionList( { entityForSuggestions, onSelect } ) {
 							search={ search }
 							onSelect={ onSelect }
 							entityForSuggestions={ entityForSuggestions }
+							composite={ composite }
 						/>
 					) ) }
-				</div>
+				</Composite>
 			) }
 			{ !! search && ! suggestions?.length && <p>No results</p> }
 		</>

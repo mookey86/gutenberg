@@ -209,12 +209,10 @@ export default function NewTemplate( { postType } ) {
 		},
 		[]
 	);
-
 	// TODO: better handling here.
 	if ( ! missingTemplates.length && ! extraTemplates.length ) {
 		return null;
 	}
-
 	// Update the sort order to match the DEFAULT_TEMPLATE_SLUGS order.
 	// TODO: check sorting with new items.
 	missingTemplates?.sort( ( template1, template2 ) => {
@@ -225,7 +223,6 @@ export default function NewTemplate( { postType } ) {
 	} );
 	// Append all extra templates at the end of the list for now.
 	missingTemplates.push( ...extraTemplates );
-
 	return (
 		<>
 			<DropdownMenu

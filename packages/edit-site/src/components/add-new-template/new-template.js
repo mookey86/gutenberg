@@ -31,7 +31,7 @@ import {
 	search,
 	tag,
 } from '@wordpress/icons';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { store as noticesStore } from '@wordpress/notices';
 
 /**
@@ -166,8 +166,17 @@ export default function NewTemplate( { postType } ) {
 			const hasEntities = postTypesHaveEntities?.[ slug ];
 			const menuItem = {
 				slug: `single-${ slug }`,
-				title: `Single ${ singularName }`,
-				description: `Displays a single ${ singularName }.`,
+				title: sprintf(
+					// translators: %s: Name of the post type e.g: "Post".
+					__( 'Single %s' ),
+					singularName
+				),
+				// title: `Single ${ singularName }`,
+				description: sprintf(
+					// translators: %s: Name of the post type e.g: "Post".
+					__( 'Displays a single %s.' ),
+					singularName
+				),
 				icon,
 			};
 			// We have a different template creation flow only if they have entities.
@@ -208,8 +217,16 @@ export default function NewTemplate( { postType } ) {
 			) {
 				accumulator.push( {
 					slug: `archive-${ slug }`,
-					title: `${ singularName } archive`,
-					description: `Displays archive of ${ name }.`,
+					title: sprintf(
+						// translators: %s: Name of the post type e.g: "Post".
+						__( '%s archive' ),
+						singularName
+					),
+					description: sprintf(
+						// translators: %s: Name of the post type in plural e.g: "Posts".
+						__( 'Displays archive of %s.' ),
+						name
+					),
 					icon,
 				} );
 			}

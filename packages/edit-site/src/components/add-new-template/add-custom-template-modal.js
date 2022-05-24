@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { useState, useMemo, useEffect } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import {
 	Button,
 	Flex,
@@ -124,7 +124,6 @@ function SuggestionList( { entityForSuggestions, onSelect } ) {
 	return (
 		<>
 			<SearchControl
-				className=""
 				onChange={ setSearchInputValue }
 				value={ searchInputValue }
 				label={ __( 'Search' ) }
@@ -150,7 +149,9 @@ function SuggestionList( { entityForSuggestions, onSelect } ) {
 					) ) }
 				</Composite>
 			) }
-			{ !! search && ! suggestions?.length && <p>No results</p> }
+			{ !! search && ! suggestions?.length && (
+				<p>{ __( 'No results were found.' ) }</p>
+			) }
 		</>
 	);
 }
@@ -162,7 +163,11 @@ function AddCustomTemplateModal( { onClose, onSelect, entityForSuggestions } ) {
 	const baseCssClass = 'edit-site-custom-template-modal';
 	return (
 		<Modal
-			title={ `Add a template for post type: ${ entityForSuggestions.labels.singular }` }
+			title={ sprintf(
+				// translators: %s: Name of the post type e.g: "Post".
+				__( 'Add %s template' ),
+				entityForSuggestions.labels.singular
+			) }
 			className={ baseCssClass }
 			closeLabel={ __( 'Close' ) }
 			onRequestClose={ onClose }
@@ -194,30 +199,45 @@ function AddCustomTemplateModal( { onClose, onSelect, entityForSuggestions } ) {
 							<Icon icon={ globe } />
 							<Heading level={ 5 }>{ __( 'General' ) }</Heading>
 							<Text as="span">
-								{ `Design a template for all ${ entityForSuggestions.labels.plural }.` }
+								{ sprintf(
+									// translators: %s: Name of the post type in plural e.g: "Posts".
+									__( 'Design a template for a all %s.' ),
+									entityForSuggestions.labels.plural
+								) }
 							</Text>
 						</FlexItem>
 						<FlexItem
 							isBlock
-							onClick={
-								() => {
-									setShowSearchEntities( true );
-								}
-								// show the available missing types...
-							}
+							onClick={ () => {
+								setShowSearchEntities( true );
+							} }
 						>
 							<Icon icon={ pin } />
 							<Heading level={ 5 }>{ __( 'Specific' ) }</Heading>
 							<Text as="span">
-								{ `Design a template for a specific ${ entityForSuggestions.labels.singular }.` }
+								{ sprintf(
+									// translators: %s: Name of the post type e.g: "Post".
+									__(
+										'Design a template for a specific %s.'
+									),
+									entityForSuggestions.labels.singular
+								) }
 							</Text>
 						</FlexItem>
-					</Flex>{ ' ' }
+					</Flex>
 				</>
 			) }
 			{ showSearchEntities && (
 				<>
-					<p>{ `Use the search form below to find or create a template for a certain ${ entityForSuggestions.labels.singular }.` }</p>
+					<p>
+						{ sprintf(
+							// translators: %s: Name of the post type e.g: "Post".
+							__(
+								'Select the %s you would like to design a template for.'
+							),
+							entityForSuggestions.labels.singular
+						) }
+					</p>
 					<SuggestionList
 						entityForSuggestions={ entityForSuggestions }
 						onSelect={ onSelect }

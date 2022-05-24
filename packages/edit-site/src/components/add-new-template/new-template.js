@@ -82,9 +82,9 @@ export default function NewTemplate( { postType } ) {
 		false
 	);
 	const [ entityForSuggestions, setEntityForSuggestions ] = useState( {} );
-	const { templates, defaultTemplateTypes } = useSelect(
+	const { existingTemplates, defaultTemplateTypes } = useSelect(
 		( select ) => ( {
-			templates: select( coreStore ).getEntityRecords(
+			existingTemplates: select( coreStore ).getEntityRecords(
 				'postType',
 				'wp_template',
 				{ per_page: -1 }
@@ -137,7 +137,7 @@ export default function NewTemplate( { postType } ) {
 		}
 	}
 
-	const existingTemplateSlugs = ( templates || [] ).map(
+	const existingTemplateSlugs = ( existingTemplates || [] ).map(
 		( { slug } ) => slug
 	);
 
@@ -170,6 +170,17 @@ export default function NewTemplate( { postType } ) {
 				description: `Displays a single ${ singularName }.`,
 				icon,
 				onClick: ( template ) => {
+					const slugsWithTemplates = (
+						existingTemplates || []
+					).reduce( ( _accumulator, existingTemplate ) => {
+						const prefix = `single-${ slug }-`;
+						if ( existingTemplate.slug.startsWith( prefix ) ) {
+							_accumulator.push(
+								existingTemplate.slug.substring( prefix.length )
+							);
+						}
+						return _accumulator;
+					}, [] );
 					setShowCustomTemplateModal( true );
 					setEntityForSuggestions( {
 						type: 'postType',
@@ -177,6 +188,7 @@ export default function NewTemplate( { postType } ) {
 						labels: { singular: singularName, plural: name },
 						hasGeneralTemplate,
 						template,
+						slugsWithTemplates,
 					} );
 				},
 			} );
@@ -266,7 +278,6 @@ export default function NewTemplate( { postType } ) {
 			{ showCustomTemplateModal && (
 				<AddCustomTemplateModal
 					onClose={ () => setShowCustomTemplateModal( false ) }
-					existingTemplateSlugs={ existingTemplateSlugs }
 					onSelect={ createTemplate }
 					entityForSuggestions={ entityForSuggestions }
 				/>

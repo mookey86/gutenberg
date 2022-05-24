@@ -16,3 +16,33 @@ export const usePostTypes = () => {
 	);
 	return filteredPostTypes;
 };
+
+export const useExistingEntitiesToExclude = ( entityForSuggestions ) => {
+	const { slugsWithTemplates, type, slug } = entityForSuggestions;
+	const { results, hasResolved } = useSelect( ( select ) => {
+		if ( ! slugsWithTemplates.length ) {
+			return {
+				results: [],
+				hasResolved: true,
+			};
+		}
+		const { getEntityRecords, hasFinishedResolution } = select( coreStore );
+		const selectorArgs = [
+			type,
+			slug,
+			{
+				_fields: 'id',
+				slug: slugsWithTemplates,
+				context: 'view',
+			},
+		];
+		return {
+			results: getEntityRecords( ...selectorArgs ),
+			hasResolved: hasFinishedResolution(
+				'getEntityRecords',
+				selectorArgs
+			),
+		};
+	}, [] );
+	return [ ( results || [] ).map( ( { id } ) => id ), hasResolved ];
+};

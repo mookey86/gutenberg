@@ -24,8 +24,12 @@ import { pin, globe } from '@wordpress/icons';
 import { useSelect } from '@wordpress/data';
 // import { useDebounce } from '@wordpress/compose';
 // import { speak } from '@wordpress/a11y';
-
 import { store as coreStore } from '@wordpress/core-data';
+
+/**
+ * Internal dependencies
+ */
+import { useExistingEntitiesToExclude } from './utils';
 
 const EMPTY_ARRAY = [];
 const BASE_QUERY = {
@@ -58,19 +62,28 @@ function SuggestionListItem( {
 	);
 }
 
-function SuggestionList( {
-	entityForSuggestions,
-	onSelect,
-	// existingTemplateSlugs,
-} ) {
-	// TODO: `entityForSuggestions` will be used and is an attempt to
-	// reuse things for other queries like taxonomies.
+function SuggestionList( { entityForSuggestions, onSelect } ) {
+	// TODO: `entityForSuggestions` is an attempt to be
+	// reuses for other queries like taxonomies in follow ups.
 	const [ search, setSearch ] = useState( '' );
 	const [ suggestions, setSuggestions ] = useState( EMPTY_ARRAY );
 	// TODO: debounce search query.
 	// const debouncedSearch = useDebounce( setSearch, 250 );
+
+	// Get ids of existing entities to exclude from search results.
+	const [
+		entitiesToExclude,
+		entitiesToExcludeHasResolved,
+	] = useExistingEntitiesToExclude( entityForSuggestions );
 	const { searchResults, searchHasResolved } = useSelect(
 		( select ) => {
+			// Wait for the request of finding the excluded items first.
+			if ( ! entitiesToExcludeHasResolved ) {
+				return {
+					searchResults: EMPTY_ARRAY,
+					searchHasResolved: false,
+				};
+			}
 			const { getEntityRecords, hasFinishedResolution } = select(
 				coreStore
 			);
@@ -81,8 +94,7 @@ function SuggestionList( {
 					...BASE_QUERY,
 					search,
 					orderby: !! search ? 'relevance' : 'modified',
-					// TODO: exclude existing slugs(templates for specific entities)...
-					//  exclude: existingTemplateSlugs,
+					exclude: entitiesToExclude,
 					per_page: !! search ? 20 : 10,
 				},
 			];
@@ -94,7 +106,7 @@ function SuggestionList( {
 				),
 			};
 		},
-		[ search ]
+		[ search, entitiesToExclude, entitiesToExcludeHasResolved ]
 	);
 
 	const entitiesInfo = useMemo( () => {
@@ -135,12 +147,7 @@ function SuggestionList( {
 	);
 }
 
-function AddCustomTemplateModal( {
-	onClose,
-	onSelect,
-	existingTemplateSlugs,
-	entityForSuggestions,
-} ) {
+function AddCustomTemplateModal( { onClose, onSelect, entityForSuggestions } ) {
 	const [ showSearchEntities, setShowSearchEntities ] = useState(
 		entityForSuggestions.hasGeneralTemplate
 	);
@@ -206,7 +213,6 @@ function AddCustomTemplateModal( {
 					<SuggestionList
 						entityForSuggestions={ entityForSuggestions }
 						onSelect={ onSelect }
-						existingTemplateSlugs={ existingTemplateSlugs }
 					/>
 				</>
 			) }

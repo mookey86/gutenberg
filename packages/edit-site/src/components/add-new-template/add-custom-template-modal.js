@@ -1,13 +1,9 @@
 /**
- * External dependencies
- */
-import { get } from 'lodash';
-/**
  * WordPress dependencies
  */
 import { useState, useMemo, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { decodeEntities } from '@wordpress/html-entities';
+
 import {
 	Button,
 	Flex,
@@ -16,20 +12,19 @@ import {
 	Modal,
 	SearchControl,
 	TextHighlight,
-	// __experimentalHStack as HStack,
 	__experimentalText as Text,
 	__experimentalHeading as Heading,
 } from '@wordpress/components';
 import { pin, globe } from '@wordpress/icons';
 import { useSelect } from '@wordpress/data';
-// import { useDebounce } from '@wordpress/compose';
+import { useDebounce } from '@wordpress/compose';
 // import { speak } from '@wordpress/a11y';
 import { store as coreStore } from '@wordpress/core-data';
 
 /**
  * Internal dependencies
  */
-import { useExistingEntitiesToExclude } from './utils';
+import { useExistingEntitiesToExclude, mapToIHasNameAndId } from './utils';
 
 const EMPTY_ARRAY = [];
 const BASE_QUERY = {
@@ -65,11 +60,12 @@ function SuggestionListItem( {
 function SuggestionList( { entityForSuggestions, onSelect } ) {
 	// TODO: `entityForSuggestions` is an attempt to be
 	// reuses for other queries like taxonomies in follow ups.
-	const [ search, setSearch ] = useState( '' );
 	const [ suggestions, setSuggestions ] = useState( EMPTY_ARRAY );
-	// TODO: debounce search query.
-	// const debouncedSearch = useDebounce( setSearch, 250 );
-
+	// We need to track two values, the search input's value(searchInputValue)
+	// and the one we want to debounce(search) and make REST API requests.
+	const [ searchInputValue, setSearchInputValue ] = useState( '' );
+	const [ search, setSearch ] = useState( '' );
+	const debouncedSearch = useDebounce( setSearch, 250 );
 	// Get ids of existing entities to exclude from search results.
 	const [
 		entitiesToExclude,
@@ -108,7 +104,11 @@ function SuggestionList( { entityForSuggestions, onSelect } ) {
 		},
 		[ search, entitiesToExclude, entitiesToExcludeHasResolved ]
 	);
-
+	useEffect( () => {
+		if ( search !== searchInputValue ) {
+			debouncedSearch( searchInputValue );
+		}
+	}, [ search, searchInputValue ] );
 	const entitiesInfo = useMemo( () => {
 		if ( ! searchResults?.length ) return EMPTY_ARRAY;
 		return mapToIHasNameAndId( searchResults, 'title.rendered' );
@@ -122,8 +122,8 @@ function SuggestionList( { entityForSuggestions, onSelect } ) {
 		<>
 			<SearchControl
 				className=""
-				onChange={ setSearch }
-				value={ search }
+				onChange={ setSearchInputValue }
+				value={ searchInputValue }
 				label={ __( 'Search' ) }
 				placeholder={ __( 'Search' ) }
 			/>
@@ -221,10 +221,3 @@ function AddCustomTemplateModal( { onClose, onSelect, entityForSuggestions } ) {
 }
 
 export default AddCustomTemplateModal;
-
-function mapToIHasNameAndId( entities, path ) {
-	return ( entities || [] ).map( ( entity ) => ( {
-		...entity,
-		name: decodeEntities( get( entity, path ) ),
-	} ) );
-}

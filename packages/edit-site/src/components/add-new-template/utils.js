@@ -1,8 +1,14 @@
 /**
+ * External dependencies
+ */
+import { get } from 'lodash';
+
+/**
  * WordPress dependencies
  */
 import { useSelect } from '@wordpress/data';
 import { store as coreStore } from '@wordpress/core-data';
+import { decodeEntities } from '@wordpress/html-entities';
 
 export const usePostTypes = () => {
 	const postTypes = useSelect(
@@ -45,4 +51,11 @@ export const useExistingEntitiesToExclude = ( entityForSuggestions ) => {
 		};
 	}, [] );
 	return [ ( results || [] ).map( ( { id } ) => id ), hasResolved ];
+};
+
+export const mapToIHasNameAndId = ( entities, path ) => {
+	return ( entities || [] ).map( ( entity ) => ( {
+		...entity,
+		name: decodeEntities( get( entity, path ) ),
+	} ) );
 };

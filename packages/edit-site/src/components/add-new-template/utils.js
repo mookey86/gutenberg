@@ -9,7 +9,7 @@ export const usePostTypes = () => {
 		( select ) => select( coreStore ).getPostTypes( { per_page: -1 } ),
 		[]
 	);
-	const excludedPostTypes = [ 'attachment' ];
+	const excludedPostTypes = [ 'attachment', 'page' ];
 	const filteredPostTypes = postTypes?.filter(
 		( { viewable, slug } ) =>
 			viewable && ! excludedPostTypes.includes( slug )

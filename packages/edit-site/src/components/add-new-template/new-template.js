@@ -46,9 +46,8 @@ import { store as editSiteStore } from '../../store';
 const DEFAULT_TEMPLATE_SLUGS = [
 	'front-page',
 	// TODO: Info about this need to be change from `post` to make it clear we are creating `single` template.
-	'single',
-	// TODO: need to update `get_default_block_template_types` for 6.1 and where this change cascades.
-	// 'page',
+	// 'single',
+	'page',
 	'index',
 	'archive',
 	'author',
@@ -151,9 +150,7 @@ export default function NewTemplate( { postType } ) {
 			! includes( existingTemplateSlugs, template.slug )
 	);
 
-	// TODO: we will need to update the check as the menu item should always
-	// be there to create a specific 'post' template(ex post-$posttype-$slug)
-	// Also we might need to check if there are `posts` from the $postType as,
+	// TODO: we might need to check if there are `posts` from the $postType as,
 	// it would show a search with no posts available..
 	// TODO: make all strings translatable.
 	const extraTemplates = ( postTypes || [] ).reduce(
@@ -164,13 +161,11 @@ export default function NewTemplate( { postType } ) {
 				menu_icon: icon,
 				name,
 			} = _postType;
-			// `page` post type is the single exception for `single-$post_type` and archive rule.
-			const isPage = slug === 'page';
 			const hasGeneralTemplate = existingTemplateSlugs?.includes(
-				isPage ? slug : `single-${ slug }`
+				`single-${ slug }`
 			);
 			accumulator.push( {
-				slug: isPage ? slug : `single-${ slug }`,
+				slug: `single-${ slug }`,
 				title: `Single ${ singularName }`,
 				description: `Displays a single ${ singularName }.`,
 				icon,
@@ -186,7 +181,11 @@ export default function NewTemplate( { postType } ) {
 				},
 			} );
 			// Add conditionally the `archive-$post_type` item.
-			if ( ! existingTemplateSlugs?.includes( `archive-${ slug }` ) ) {
+			// `post` is a special post type and doesn't have `archive-post`.
+			if (
+				slug !== 'post' &&
+				! existingTemplateSlugs?.includes( `archive-${ slug }` )
+			) {
 				accumulator.push( {
 					slug: `archive-${ slug }`,
 					title: `${ singularName } archive`,
@@ -212,7 +211,6 @@ export default function NewTemplate( { postType } ) {
 			DEFAULT_TEMPLATE_SLUGS.indexOf( template2.slug )
 		);
 	} );
-
 	// Append all extra templates at the end of the list for now.
 	missingTemplates.push( ...extraTemplates );
 

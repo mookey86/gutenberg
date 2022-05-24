@@ -40,8 +40,6 @@ function SuggestionListItem( {
 	onSelect,
 	entityForSuggestions,
 } ) {
-	// TODO: handle this better.
-	const isPage = entityForSuggestions.slug === 'page';
 	return (
 		<Button
 			className="template-suggestion-item"
@@ -51,9 +49,7 @@ function SuggestionListItem( {
 				onSelect( {
 					title,
 					description: title,
-					slug: isPage
-						? `${ entityForSuggestions.slug }-${ suggestion.slug }`
-						: `single-${ entityForSuggestions.slug }-${ suggestion.slug }`,
+					slug: `single-${ entityForSuggestions.slug }-${ suggestion.slug }`,
 				} );
 			} }
 		>
@@ -148,9 +144,11 @@ function AddCustomTemplateModal( {
 	const [ showSearchEntities, setShowSearchEntities ] = useState(
 		entityForSuggestions.hasGeneralTemplate
 	);
+	const baseCssClass = 'edit-site-custom-template-modal';
 	return (
 		<Modal
 			title={ `Add a template for post type: ${ entityForSuggestions.labels.singular }` }
+			className={ baseCssClass }
 			closeLabel={ __( 'Close' ) }
 			onRequestClose={ onClose }
 		>
@@ -162,7 +160,7 @@ function AddCustomTemplateModal( {
 						) }
 					</p>
 					<Flex
-						className="edit-site-components-add-custom-template"
+						className={ `${ baseCssClass }__contents` }
 						gap="4"
 						align="initial"
 					>

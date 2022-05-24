@@ -38,7 +38,7 @@ import { store as noticesStore } from '@wordpress/notices';
  * Internal dependencies
  */
 import AddCustomTemplateModal from './add-custom-template-modal';
-import { usePostTypes } from './utils';
+import { usePostTypes, usePostTypesHaveEntities } from './utils';
 import { useHistory } from '../routes';
 import { store as editSiteStore } from '../../store';
 
@@ -46,7 +46,7 @@ import { store as editSiteStore } from '../../store';
 const DEFAULT_TEMPLATE_SLUGS = [
 	'front-page',
 	// TODO: Info about this need to be change from `post` to make it clear we are creating `single` template.
-	// 'single',
+	'single',
 	'page',
 	'index',
 	'archive',
@@ -78,6 +78,7 @@ const TEMPLATE_ICONS = {
 export default function NewTemplate( { postType } ) {
 	const history = useHistory();
 	const postTypes = usePostTypes();
+	const postTypesHaveEntities = usePostTypesHaveEntities();
 	const [ showCustomTemplateModal, setShowCustomTemplateModal ] = useState(
 		false
 	);
@@ -150,8 +151,6 @@ export default function NewTemplate( { postType } ) {
 			! includes( existingTemplateSlugs, template.slug )
 	);
 
-	// TODO: we might need to check if there are `posts` from the $postType as,
-	// it would show a search with no posts available..
 	// TODO: make all strings translatable.
 	const extraTemplates = ( postTypes || [] ).reduce(
 		( accumulator, _postType ) => {
@@ -164,12 +163,16 @@ export default function NewTemplate( { postType } ) {
 			const hasGeneralTemplate = existingTemplateSlugs?.includes(
 				`single-${ slug }`
 			);
-			accumulator.push( {
+			const hasEntities = postTypesHaveEntities?.[ slug ];
+			const menuItem = {
 				slug: `single-${ slug }`,
 				title: `Single ${ singularName }`,
 				description: `Displays a single ${ singularName }.`,
 				icon,
-				onClick: ( template ) => {
+			};
+			// We have a different template creation flow only if they have entities.
+			if ( hasEntities ) {
+				menuItem.onClick = ( template ) => {
 					const slugsWithTemplates = (
 						existingTemplates || []
 					).reduce( ( _accumulator, existingTemplate ) => {
@@ -190,8 +193,13 @@ export default function NewTemplate( { postType } ) {
 						template,
 						slugsWithTemplates,
 					} );
-				},
-			} );
+				};
+			}
+			// We don't need to add the menu item if there are no
+			// entities and the general template exists.
+			if ( ! hasGeneralTemplate || hasEntities ) {
+				accumulator.push( menuItem );
+			}
 			// Add conditionally the `archive-$post_type` item.
 			// `post` is a special post type and doesn't have `archive-post`.
 			if (

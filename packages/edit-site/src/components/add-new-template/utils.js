@@ -23,6 +23,32 @@ export const usePostTypes = () => {
 	return filteredPostTypes;
 };
 
+export const usePostTypesHaveEntities = () => {
+	const postTypes = usePostTypes();
+	const postTypesHaveEntities = useSelect(
+		( select ) => {
+			return postTypes?.reduce( ( accumulator, { slug } ) => {
+				accumulator[ slug ] = !! select( coreStore ).getEntityRecords(
+					'postType',
+					slug,
+					{
+						per_page: 1,
+						_fields: 'id',
+						context: 'view',
+					}
+				)?.length;
+				return accumulator;
+			}, {} );
+		},
+		// It's important to use `length` as a dependency because `usePostTypes`
+		// returns a new array every time and will triger a rerender.
+		// We can't avoid that because `post types` endpoint doesn't allow filtering
+		// with `viewable` prop right now.
+		[ postTypes?.length ]
+	);
+	return postTypesHaveEntities;
+};
+
 export const useExistingEntitiesToExclude = ( entityForSuggestions ) => {
 	const { slugsWithTemplates, type, slug } = entityForSuggestions;
 	const { results, hasResolved } = useSelect( ( select ) => {

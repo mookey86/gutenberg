@@ -230,8 +230,8 @@ class WP_Style_Engine {
 	/**
 	 * Extracts the slug in kebab case from a preset string, e.g., "heavenly-blue" from 'var:preset|color|heavenlyBlue'.
 	 *
-	 * @param string $style_value  A single css preset value.
-	 * @param string $property_key The CSS property that is the second element of the preset string. Used for matching.
+	 * @param string? $style_value  A single css preset value.
+	 * @param string  $property_key The CSS property that is the second element of the preset string. Used for matching.
 	 *
 	 * @return string|null The slug, or null if not found.
 	 */
@@ -283,7 +283,11 @@ class WP_Style_Engine {
 	 * @return array        An array of CSS rules.
 	 */
 	protected static function get_css( $style_value, $style_definition ) {
-		$css = array();
+		$rules = array();
+
+		if ( ! $style_value ) {
+			return $rules;
+		}
 
 		if (
 			isset( $style_definition['value_func'] ) &&
@@ -294,10 +298,24 @@ class WP_Style_Engine {
 
 		// Low-specificity check to see if the value is a CSS preset.
 		if ( is_string( $style_value ) && strpos( $style_value, 'var:' ) !== false ) {
-			return $css;
+			return $rules;
 		}
 
-		return static::get_css_rules( $style_value, $style_definition );
+		$style_properties = $style_definition['properties'];
+
+		// Default rule builder.
+		// If the input contains an array, ee assume box model-like properties
+		// for styles such as margins and padding.
+		if ( is_array( $style_value ) ) {
+			foreach ( $style_value as $key => $value ) {
+				$side_property           = sprintf( $style_properties['sides'], _wp_to_kebab_case( $key ) );
+				$rules[ $side_property ] = $value;
+			}
+		} else {
+			$rules[ $style_properties['default'] ] = $style_value;
+		}
+
+		return $rules;
 	}
 
 	/**
@@ -363,38 +381,6 @@ class WP_Style_Engine {
 	}
 
 	/**
-	 * Default style value parser that returns a CSS ruleset.
-	 * If the input contains an array, it will be treated like a box model
-	 * for styles such as margins and padding.
-	 *
-	 * @param string|array $style_value      A single raw Gutenberg style attributes value for a CSS property.
-	 * @param array        $style_definition A single style definition from BLOCK_STYLE_DEFINITIONS_METADATA.
-	 *
-	 * @return array The class name for the added style.
-	 */
-	protected static function get_css_rules( $style_value, $style_definition ) {
-		$rules = array();
-
-		if ( ! $style_value ) {
-			return $rules;
-		}
-
-		$style_properties = $style_definition['properties'];
-
-		// We assume box model-like properties.
-		if ( is_array( $style_value ) ) {
-			foreach ( $style_value as $key => $value ) {
-				$side_property           = sprintf( $style_properties['sides'], _wp_to_kebab_case( $key ) );
-				$rules[ $side_property ] = $value;
-			}
-		} else {
-			$rules[ $style_properties['default'] ] = $style_value;
-		}
-
-		return $rules;
-	}
-
-	/**
 	 * Style value parser that returns a CSS ruleset for style groups that have 'top', 'right', 'bottom', 'left' keys.
 	 * E.g., `border.top{color|width|style}.
 	 *
@@ -421,6 +407,7 @@ class WP_Style_Engine {
 				continue;
 			}
 
+			// Build a path to the side rules in definitions.
 			$style_definition_path = array( $definition_group_key, $css_property );
 			$style_definition      = _wp_array_get( self::BLOCK_STYLE_DEFINITIONS_METADATA, $style_definition_path, null );
 

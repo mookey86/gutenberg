@@ -17,6 +17,59 @@
 class WP_Theme_JSON_6_1 extends WP_Theme_JSON_6_0 {
 	const __EXPERIMENTAL_ELEMENT_BUTTON_CLASS_NAME = 'wp-element-button';
 
+	/**
+	 * The valid properties under the settings key.
+	 *
+	 * @var array
+	 */
+	const VALID_SETTINGS = array(
+		'appearanceTools' => null,
+		'border'          => array(
+			'color'  => null,
+			'radius' => null,
+			'style'  => null,
+			'width'  => null,
+		),
+		'color'           => array(
+			'background'       => null,
+			'custom'           => null,
+			'customDuotone'    => null,
+			'customGradient'   => null,
+			'defaultDuotone'   => null,
+			'defaultGradients' => null,
+			'defaultPalette'   => null,
+			'duotone'          => null,
+			'gradients'        => null,
+			'link'             => null,
+			'palette'          => null,
+			'text'             => null,
+		),
+		'custom'          => null,
+		'layout'          => array(
+			'contentSize' => null,
+			'wideSize'    => null,
+			'padding'     => null,
+		),
+		'spacing'         => array(
+			'blockGap' => null,
+			'margin'   => null,
+			'padding'  => null,
+			'units'    => null,
+		),
+		'typography'      => array(
+			'customFontSize' => null,
+			'dropCap'        => null,
+			'fontFamilies'   => null,
+			'fontSizes'      => null,
+			'fontStyle'      => null,
+			'fontWeight'     => null,
+			'letterSpacing'  => null,
+			'lineHeight'     => null,
+			'textDecoration' => null,
+			'textTransform'  => null,
+		),
+	);
+
 	const ELEMENTS = array(
 		'link'   => 'a',
 		'h1'     => 'h1',
